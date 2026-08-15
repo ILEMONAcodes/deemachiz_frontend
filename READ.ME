@@ -1,0 +1,86 @@
+deemachiz_frontend/
+├── public/
+│   ├── favicon.ico
+│   └── images/                     # Fallback placeholder images
+├── src/
+│   ├── app/
+│   │   ├── (auth)/                 # Unauthenticated layout group
+│   │   │   ├── login/
+│   │   │   │   └── page.tsx        # Login page (form-urlencoded + 429 rate limit UI)
+│   │   │   └── register/
+│   │   │       └── page.tsx        # Registration page
+│   │   │
+│   │   ├── (shop)/                 # Main customer shop layout group
+│   │   │   ├── page.tsx            # Home / Landing page
+│   │   │   ├── products/
+│   │   │   │   ├── page.tsx        # Product catalog & category filtering
+│   │   │   │   └── [id]/
+│   │   │   │       └── page.tsx    # Product detail (chip selection for sizes/colors)
+│   │   │   ├── cart/
+│   │   │   │   └── page.tsx        # Dedicated cart management view
+│   │   │   ├── checkout/
+│   │   │   │   ├── page.tsx        # Checkout confirmation -> Paystack redirect
+│   │   │   │   └── return/
+│   │   │   │       └── page.tsx    # Paystack redirect callback (SSE stream / polling)
+│   │   │   └── account/
+│   │   │       └── page.tsx        # Profile page (from GET /auth/me)
+│   │   │
+│   │   ├── orders/                 # Customer order management (Protected)
+│   │   │   ├── page.tsx            # Order history list (client-side paginated)
+│   │   │   └── [id]/
+│   │   │       └── page.tsx        # Single order status & live SSE tracking
+│   │   │
+│   │   ├── admin/                  # Admin dashboard (Admin role required)
+│   │   │   ├── page.tsx            # Admin overview dashboard
+│   │   │   ├── products/
+│   │   │   │   ├── page.tsx        # Admin product list
+│   │   │   │   └── new/
+│   │   │   │       └── page.tsx    # Create product form (POST /products/)
+│   │   │   └── orders/
+│   │   │       └── page.tsx        # All-orders view (with backend gap warning)
+│   │   │
+│   │   ├── globals.css             # Tailwind base & custom blue/white variables
+│   │   └── layout.tsx              # Root layout wrapping global providers
+│   │
+│   ├── components/
+│   │   ├── layout/
+│   │   │   ├── Navbar.tsx          # Responsive blue/white header with cart badge
+│   │   │   ├── Footer.tsx          # Site footer
+│   │   │   ├── MobileNav.tsx       # Touch-friendly drawer for mobile
+│   │   │   └── AdminSidebar.tsx    # Navigation for admin routes
+│   │   │
+│   │   ├── products/
+│   │   │   ├── ProductCard.tsx     # Image-forward card with quick add
+│   │   │   ├── ProductGrid.tsx     # Responsive grid container
+│   │   │   └── OptionSelector.tsx  # Parses freeform "Queen,King" strings into chips
+│   │   │
+│   │   ├── cart/
+│   │   │   ├── CartDrawer.tsx      # Slide-over cart drawer
+│   │   │   └── CartItemRow.tsx     # Additive & remove primitive controls
+│   │   │
+│   │   ├── orders/
+│   │   │   ├── OrderStatusBadge.tsx# Color-coded badge for order state
+│   │   │   └── PaymentCountdown.tsx# 30-minute reservation timer
+│   │   │
+│   │   └── ui/                     # Reusable design system primitives
+│   │       ├── Button.tsx          # Brand blue primary & outline variants
+│   │       ├── Input.tsx           # Standard text & password fields
+│   │       ├── Alert.tsx           # 429 Rate limit & 409 stock warning banners
+│   │       └── Modal.tsx           # General popup dialogs
+│   │
+│   ├── context/
+│   │   ├── AuthContext.tsx         # User token, role state & token expiration listener
+│   │   └── CartContext.tsx         # Server-authoritative cart state cache
+│   │
+│   ├── lib/
+│   │   ├── api-client.ts           # Shared fetch wrapper with token/429/401 handling
+│   │   └── sse-client.ts           # Order status stream handler (@microsoft/fetch-event-source / polling)
+│   │
+│   └── types/
+│       └── api.ts                  # TypeScript interfaces matching FastAPI schemas
+│
+├── .env.local                      # NEXT_PUBLIC_API_BASE_URL
+├── next.config.mjs
+├── package.json
+├── tailwind.config.ts              # Custom blue primary palette setup
+└── tsconfig.json
