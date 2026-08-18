@@ -11,7 +11,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const isHomePage = pathname === '/';
 
-  const { user, authenticated, logout } = useAuth();
+  const { user, logout } = useAuth();
   const { itemCount, openCart } = useCart();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -33,6 +33,10 @@ export default function Navbar() {
 
   // Use transparent style ONLY if we are on the Home Page AND at the very top of scroll
   const isTransparent = isHomePage && !isScrolled;
+
+  // Normalized role check to safely support different backend capitalizations
+  const role = String(user?.role || '').toUpperCase().trim();
+  const isAdmin = role === 'ADMIN' || role === 'ADMINISTRATOR';
 
   return (
     <nav
@@ -107,7 +111,7 @@ export default function Navbar() {
             </button>
 
             {/* Auth Dropdown or Sign In */}
-            {authenticated ? (
+            {user ? (
               <div className="relative">
                 <button
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
@@ -142,7 +146,7 @@ export default function Navbar() {
                       <p className="text-[11px] text-gray-500 truncate">{user?.email}</p>
                     </div>
 
-                    {user?.role === 'admin' && (
+                    {isAdmin && (
                       <Link
                         href="/admin"
                         className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 transition-colors"
@@ -218,14 +222,14 @@ export default function Navbar() {
             Explore Products
           </Link>
 
-          {authenticated ? (
+          {user ? (
             <div className="pt-2 space-y-2">
               <div className="px-2 py-1 bg-gray-50 rounded-lg">
                 <p className="text-xs font-bold text-gray-900">{user?.full_name}</p>
                 <p className="text-[11px] text-gray-500">{user?.email}</p>
               </div>
               
-              {user?.role === 'admin' && (
+              {isAdmin && (
                 <Link
                   href="/admin"
                   className="flex items-center gap-2 py-2 px-2 text-xs font-bold text-amber-800 bg-amber-50 rounded-lg"

@@ -12,6 +12,7 @@
     "@microsoft/fetch-event-source": "^2.0.1",
     "lucide-react": "^0.427.0",
     "next": "^14.2.35",
+    "next-cloudinary": "^6.18.8",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

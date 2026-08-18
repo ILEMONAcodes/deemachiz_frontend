@@ -3,12 +3,10 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
 import { User, Mail, Lock, Loader2, AlertCircle, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register } = useAuth(); // Connects to your AuthContext register method
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -18,7 +16,7 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -36,23 +34,28 @@ const handleSubmit = async (e: React.FormEvent) => {
     setIsLoading(true);
 
     try {
-      await register({
-        full_name: fullName.trim(),
-        email: email.trim().toLowerCase(),
-        password,
+      const res = await fetch('http://localhost:8000/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          full_name: fullName.trim(),
+          email: email.trim().toLowerCase(),
+          password: password,
+        }),
       });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.detail || 'Failed to create account.');
+      }
 
       router.push('/login?registered=true');
     } catch (err: any) {
       console.error('Registration error:', err);
-
-      const message =
-        err?.response?.data?.message ||
-        err?.response?.data?.detail ||
-        err?.message ||
-        'Failed to create account. Please try again.';
-
-      setErrorMessage(typeof message === 'string' ? message : 'Failed to create account.');
+      setErrorMessage(err.message || 'Failed to create account. Please try again.');
     } finally {
       setIsLoading(false);
     }

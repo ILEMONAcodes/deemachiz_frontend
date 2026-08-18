@@ -20,7 +20,7 @@ import {
 export default function CartPage() {
   const router = useRouter();
   const { cart, isLoading, updateQuantity, removeItem } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { authenticated } = useAuth();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-NG', {
@@ -30,7 +30,7 @@ export default function CartPage() {
     }).format(amount);
   };
 
-  if (!isAuthenticated) {
+  if (!authenticated) {
     return (
       <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-16 flex flex-col items-center justify-center text-center">
         <ShoppingBag className="w-16 h-16 text-gray-300 mb-4" />

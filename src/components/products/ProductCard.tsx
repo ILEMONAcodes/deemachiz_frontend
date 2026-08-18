@@ -15,11 +15,39 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { user, token } = useAuth();
+  const isAuthenticated = !!user || !!token;
   const router = useRouter();
 
   const [isAdding, setIsAdding] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
+
+  // Safely resolve image URL from various string or object formats
+  const getImageSource = (): string | null => {
+    const raw = (product as any).image || product.image_url || (product as any).images?.[0];
+
+    let extractedUrl: string | null = null;
+
+    if (typeof raw === 'string') {
+      extractedUrl = raw;
+    } else if (raw && typeof raw === 'object' && typeof raw.url === 'string') {
+      extractedUrl = raw.url;
+    }
+
+    // Validate that it's a valid relative path or absolute HTTP(S) URL
+    if (
+      extractedUrl &&
+      (extractedUrl.startsWith('http://') ||
+        extractedUrl.startsWith('https://') ||
+        extractedUrl.startsWith('/'))
+    ) {
+      return extractedUrl;
+    }
+
+    return null;
+  };
+
+  const imageSrc = getImageSource();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-NG', {
@@ -56,10 +84,10 @@ export default function ProductCard({ product }: ProductCardProps) {
       <div>
         {/* Image Container */}
         <div className="relative aspect-square w-full bg-gray-50 overflow-hidden">
-          {product.image_url ? (
+          {imageSrc ? (
             <Image
-              src={product.image_url}
-              alt={product.title}
+              src={imageSrc}
+              alt={product.title || 'Product Image'}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover object-center group-hover:scale-105 transition-transform duration-300"

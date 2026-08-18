@@ -2,37 +2,84 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Lock, Mail, Loader2, AlertCircle, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Loader2, AlertCircle, ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
-  const router = useRouter();
   const { login } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Decode optional callback URL query parameter
+  const rawCallback = searchParams.get('callbackUrl');
+  const callbackUrl = rawCallback ? decodeURIComponent(decodeURIComponent(rawCallback)) : null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setErrorMessage(null);
+    setError('');
+    setLoading(true);
 
     try {
-      // Executes login via AuthContext (saves JWT & fetches profile)
-      await login(email, password);
-      // Redirect to products page on successful authentication
-      router.push('/products');
+      // 1. Prepare OAuth2 URL-encoded form data required by FastAPI
+      const formData = new URLSearchParams();
+      formData.append('username', email.trim());
+      formData.append('password', password);
+
+      // 2. Authenticate against FastAPI backend
+      const res = await fetch('http://localhost:8000/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.detail || 'Incorrect email or password');
+      }
+
+      const token = data.access_token;
+
+      // 3. Fetch authenticated user profile details from /auth/me
+      const userRes = await fetch('http://localhost:8000/auth/me', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      let userData = null;
+      if (userRes.ok) {
+        userData = await userRes.json();
+      }
+
+      console.log('Login successful. Fetched user profile:', userData);
+
+      // 4. Update local auth context session
+      login(token, userData);
+
+      // 5. Determine user role and perform hard redirect
+      const userRole = String(userData?.role || '').toLowerCase().trim();
+
+      if (callbackUrl && callbackUrl.startsWith('/')) {
+        window.location.href = callbackUrl;
+      } else if (userRole === 'admin' || userRole === 'administrator') {
+        window.location.href = '/admin';
+      } else {
+        // Fallback route for regular users
+        window.location.href = '/admin'; 
+      }
     } catch (err: any) {
       console.error('Login error:', err);
-      // Extracts error message directly from CustomApiError / Error instance
-      setErrorMessage(
-        err?.message || 'Invalid email or password. Please try again.'
-      );
-    } finally {
-      setIsLoading(false);
+      setError(err.message || 'Authentication failed. Please check your credentials.');
+      setLoading(false);
     }
   };
 
@@ -61,19 +108,19 @@ export default function LoginPage() {
         {/* Card Form */}
         <div className="mt-8 bg-white py-8 px-6 shadow-sm border border-gray-100 rounded-2xl sm:px-10">
           
-          {/* Error Alert */}
-          {errorMessage && (
+          {/* Error Banner */}
+          {error && (
             <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-xl flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-              <p className="text-sm text-red-700">{errorMessage}</p>
+              <p className="text-sm text-red-700">{error}</p>
             </div>
           )}
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
+          <form className="space-y-4" onSubmit={handleSubmit}>
             
             {/* Email Field */}
             <div>
-              <label htmlFor="email" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+              <label htmlFor="email" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
                 Email Address
               </label>
               <div className="relative rounded-xl shadow-sm">
@@ -96,7 +143,7 @@ export default function LoginPage() {
 
             {/* Password Field */}
             <div>
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-1.5">
                 <label htmlFor="password" className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
                   Password
                 </label>
@@ -125,16 +172,16 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Submit Action */}
+            {/* Submit Button */}
             <button
               type="submit"
-              disabled={isLoading}
-              className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+              className="w-full flex justify-center items-center gap-2 mt-2 py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? (
+              {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Signing in...</span>
+                  <span>Signing In...</span>
                 </>
               ) : (
                 <>
@@ -145,10 +192,10 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Registration Redirect */}
+          {/* Registration Redirect Link */}
           <div className="mt-6 pt-6 border-t border-gray-100 text-center">
             <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link
                 href="/register"
                 className="font-bold text-brand-600 hover:text-brand-700 transition-colors"

@@ -1,9 +1,14 @@
 {
   "pages": {
-    "/(auth)/register/page": [
+    "/(shop)/products/[id]/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(auth)/register/page.js"
+      "static/chunks/app/(shop)/products/[id]/page.js"
+    ],
+    "/(shop)/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(shop)/layout.js"
     ],
     "/layout": [
       "static/chunks/webpack.js",
@@ -11,25 +16,50 @@
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
+    "/(shop)/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(shop)/page.js"
+    ],
+    "/(shop)/products/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(shop)/products/page.js"
+    ],
     "/(auth)/login/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(auth)/login/page.js"
     ],
-    "/page": [
+    "/(auth)/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/page.js"
+      "static/chunks/app/(auth)/layout.js"
     ],
-    "/products/[id]/page": [
+    "/admin/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/products/[id]/page.js"
+      "static/chunks/app/admin/page.js"
     ],
-    "/(shop)/orders/page": [
+    "/admin/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(shop)/orders/page.js"
+      "static/chunks/app/admin/layout.js"
+    ],
+    "/admin/products/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/admin/products/page.js"
+    ],
+    "/(shop)/checkout/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(shop)/checkout/page.js"
+    ],
+    "/(auth)/register/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(auth)/register/page.js"
     ],
     "/_not-found/page": [
       "static/chunks/webpack.js",

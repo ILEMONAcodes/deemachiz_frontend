@@ -1,211 +1,186 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { apiClient } from '@/lib/api-client';
-import { ArrowLeft, Loader2, PackagePlus } from 'lucide-react';
+import { CldUploadWidget } from 'next-cloudinary';
+import Image from 'next/image';
 
-export default function NewProductPage() {
+export default function AddProductForm() {
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     price: '',
     stock: '',
-    image_url: '',
-    category: 'Bedding Sets',
+    category: 'Bedding',
   });
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  // Handle successful Cloudinary upload
+  const handleUploadSuccess = (result: any) => {
+    if (result?.info?.secure_url) {
+      console.log('Cloudinary Image URL:', result.info.secure_url);
+      setImageUrl(result.info.secure_url);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage(null);
-    setIsSubmitting(true);
+
+    if (!imageUrl) {
+      alert('Please upload a product image first.');
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      await apiClient('/products/', {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+      const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+      
+      const payload = {
+        title: formData.title,
+        name: formData.title, // Fallback key for FastAPI schema
+        description: formData.description,
+        price: parseFloat(formData.price),
+        stock: parseInt(formData.stock, 10),
+        quantity: parseInt(formData.stock, 10), // Fallback key for FastAPI schema
+        category: formData.category,
+        image_url: imageUrl,
+        image: imageUrl, // Fallback key for FastAPI schema
+      };
+
+      const res = await fetch(`${baseUrl}/products`, {
         method: 'POST',
-        body: {
-          ...formData,
-          price: parseFloat(formData.price),
-          stock: parseInt(formData.stock, 10),
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
+        body: JSON.stringify(payload),
       });
 
-      // Redirect back to admin products list upon success
-      router.push('/admin/products');
-    } catch (err: unknown) {
-      console.error('Failed to create product:', err);
-      if (err instanceof Error) {
-        setErrorMessage(err.message || 'Failed to create product. Please try again.');
-      } else {
-        setErrorMessage('Failed to create product. Please try again.');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.detail || 'Failed to create product');
       }
+
+      router.push('/products');
+      router.refresh();
+    } catch (err: any) {
+      console.error('Error creating product:', err);
+      alert(err.message || 'Failed to save product. Check backend logs.');
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-        <div>
-          <h1 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
-            <PackagePlus className="w-5 h-5 text-slate-700" />
-            Create New Product
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Add a new product to your store catalog
+    <div className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+      <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm space-y-6">
+        <div className="border-b border-gray-100 pb-4">
+          <h2 className="text-2xl font-bold text-gray-900">Add New Bedding Product</h2>
+          <p className="text-xs text-gray-500 mt-1">
+            Fill in the details below to publish a new item to your store catalogue.
           </p>
         </div>
 
-        <Link
-          href="/admin/products"
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to List
-        </Link>
-      </div>
-
-      {errorMessage && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-medium">
-          {errorMessage}
-        </div>
-      )}
-
-      {/* Form Container */}
-      <form onSubmit={handleSubmit} className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm space-y-4">
+        {/* Cloudinary Widget */}
         <div>
-          <label className="block text-[11px] font-bold uppercase text-slate-600 mb-1">
-            Product Title
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Product Image <span className="text-red-500">*</span>
           </label>
+          
+          {imageUrl ? (
+            <div className="relative w-40 h-40 rounded-xl overflow-hidden border border-gray-200">
+              <Image src={imageUrl} alt="Uploaded product" fill className="object-cover" />
+              <button
+                type="button"
+                onClick={() => setImageUrl('')}
+                className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded-md hover:bg-red-700 transition-colors"
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <CldUploadWidget
+              uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+              onSuccess={handleUploadSuccess}
+            >
+              {({ open }: { open?: () => void }) => (
+                <button
+                  type="button"
+                  onClick={() => open?.()}
+                  className="px-4 py-2.5 bg-slate-900 text-white text-sm font-medium rounded-xl hover:bg-slate-800 transition-colors"
+                >
+                  Upload Image via Cloudinary
+                </button>
+              )}
+            </CldUploadWidget>
+          )}
+        </div>
+
+        {/* Product Title */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Product Title</label>
           <input
             type="text"
-            name="title"
             required
             value={formData.title}
-            onChange={handleChange}
-            placeholder="e.g. Royal Silk Duvet Set"
-            className="w-full px-3.5 py-2.5 text-xs border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-slate-900 transition-all"
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+            placeholder="Luxury Silk Sheet Set"
           />
         </div>
 
+        {/* Product Description */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <textarea
+            rows={3}
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+            placeholder="Crafted from 100% long-staple Egyptian cotton..."
+          />
+        </div>
+
+        {/* Price & Stock */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-[11px] font-bold uppercase text-slate-600 mb-1">
-              Price (NGN)
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Price (NGN)</label>
             <input
               type="number"
-              name="price"
               required
               min="0"
-              step="any"
               value={formData.price}
-              onChange={handleChange}
+              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+              className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
               placeholder="45000"
-              className="w-full px-3.5 py-2.5 text-xs border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-slate-900 transition-all"
             />
           </div>
-
           <div>
-            <label className="block text-[11px] font-bold uppercase text-slate-600 mb-1">
-              Stock Quantity
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
             <input
               type="number"
-              name="stock"
               required
               min="0"
               value={formData.stock}
-              onChange={handleChange}
+              onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+              className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
               placeholder="10"
-              className="w-full px-3.5 py-2.5 text-xs border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-slate-900 transition-all"
             />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-[11px] font-bold uppercase text-slate-600 mb-1">
-              Category
-            </label>
-            <select
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              className="w-full px-3.5 py-2.5 text-xs border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-slate-900 bg-white transition-all"
-            >
-              <option value="Bedding Sets">Bedding Sets</option>
-              <option value="Pillows & Cushions">Pillows & Cushions</option>
-              <option value="Duvets & Comforters">Duvets & Comforters</option>
-              <option value="Bedsheets">Bedsheets</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-bold uppercase text-slate-600 mb-1">
-              Image URL
-            </label>
-            <input
-              type="url"
-              name="image_url"
-              value={formData.image_url}
-              onChange={handleChange}
-              placeholder="https://res.cloudinary.com/..."
-              className="w-full px-3.5 py-2.5 text-xs border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-slate-900 transition-all"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-[11px] font-bold uppercase text-slate-600 mb-1">
-            Description
-          </label>
-          <textarea
-            name="description"
-            rows={4}
-            value={formData.description}
-            onChange={handleChange}
-            placeholder="Provide detail on thread count, materials, and features..."
-            className="w-full px-3.5 py-2.5 text-xs border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-slate-900 resize-none transition-all"
-          />
-        </div>
-
-        <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">
-          <Link
-            href="/admin/products"
-            className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors"
-          >
-            Cancel
-          </Link>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all shadow-sm active:scale-[0.99] disabled:opacity-50"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                Publishing...
-              </>
-            ) : (
-              'Publish Product'
-            )}
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+        >
+          {loading ? 'Creating Product...' : 'Create Product'}
+        </button>
       </form>
     </div>
   );
