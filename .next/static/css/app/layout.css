@@ -687,9 +687,6 @@ video {
 .grid {
   display: grid;
 }
-.contents {
-  display: contents;
-}
 .hidden {
   display: none;
 }
@@ -932,6 +929,9 @@ video {
 .cursor-not-allowed {
   cursor: not-allowed;
 }
+.cursor-pointer {
+  cursor: pointer;
+}
 .resize-none {
   resize: none;
 }
@@ -1108,6 +1108,9 @@ video {
 }
 .border-dashed {
   border-style: dashed;
+}
+.border-none {
+  border-style: none;
 }
 .border-amber-100 {
   --tw-border-opacity: 1;
@@ -1379,6 +1382,9 @@ video {
 .object-center {
   -o-object-position: center;
      object-position: center;
+}
+.p-0 {
+  padding: 0px;
 }
 .p-1 {
   padding: 0.25rem;

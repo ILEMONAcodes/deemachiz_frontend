@@ -1,8 +1,15 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import { Mail, Phone, MapPin } from 'lucide-react';
 
 export default function Footer() {
+  const handleCartClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    window.dispatchEvent(new CustomEvent('open-cart-drawer'));
+  };
+
   return (
     <footer className="bg-slate-900 text-slate-300 border-t border-slate-800 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -55,9 +62,12 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/cart" className="hover:text-white transition-colors">
+                <button
+                  onClick={handleCartClick}
+                  className="hover:text-white transition-colors text-left bg-transparent border-none p-0 cursor-pointer text-sm font-normal text-slate-300"
+                >
                   Cart View
-                </Link>
+                </button>
               </li>
             </ul>
           </div>

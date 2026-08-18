@@ -79,6 +79,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const openCart = () => setIsOpen(true);
   const closeCart = () => setIsOpen(false);
 
+  // Listen for global custom events to open the cart (e.g. from the Footer)
+  useEffect(() => {
+    const handleOpenCartEvent = () => setIsOpen(true);
+    window.addEventListener('open-cart-drawer', handleOpenCartEvent);
+    return () => {
+      window.removeEventListener('open-cart-drawer', handleOpenCartEvent);
+    };
+  }, []);
+
   const refreshCart = useCallback(async () => {
     if (!isAuthenticated || !token) {
       setCart([]);
@@ -124,9 +133,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     setIsLoading(true);
     try {
-      // Pass the plain object directly. If apiClient handles JSON.stringify 
-      // internally, passing a stringified body results in a double-stringified 
-      // payload causing the backend 422 error ("Input should be a valid dictionary").
       const data = await apiClient<CartResponse>('/cart/items', {
         method: 'POST',
         body: { product_id: productId, quantity: qtyToAdd },
