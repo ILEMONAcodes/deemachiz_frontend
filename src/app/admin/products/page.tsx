@@ -47,6 +47,11 @@ export default function AdminProductsPage() {
     }).format(amount);
   };
 
+  const isValidUrl = (url?: string) => {
+    if (!url) return false;
+    return url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/');
+  };
+
   const fetchProducts = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -113,13 +118,15 @@ export default function AdminProductsPage() {
     }
   };
 
-  const categories = ['ALL', ...Array.from(new Set(products.map((p) => p.category)))];
+  const categories = ['ALL', ...Array.from(new Set(products.map((p) => p.category).filter(Boolean)))];
 
   const filteredProducts = products.filter((p) => {
-    const matchesSearch =
-      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.category.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'ALL' || p.category === selectedCategory;
+    const title = (p?.title || '').toLowerCase();
+    const category = (p?.category || '').toLowerCase();
+    const query = (searchQuery || '').toLowerCase();
+
+    const matchesSearch = title.includes(query) || category.includes(query);
+    const matchesCategory = selectedCategory === 'ALL' || p?.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -219,18 +226,19 @@ export default function AdminProductsPage() {
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
                 {filteredProducts.map((product) => {
-                  const isOutOfStock = product.stock <= 0;
-                  const isLowStock = product.stock > 0 && product.stock <= 5;
+                  const stockCount = product?.stock ?? 0;
+                  const isOutOfStock = stockCount <= 0;
+                  const isLowStock = stockCount > 0 && stockCount <= 5;
 
                   return (
                     <tr key={product.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden relative shrink-0">
-                            {product.image_url ? (
+                            {isValidUrl(product.image_url) ? (
                               <Image
-                                src={product.image_url}
-                                alt={product.title}
+                                src={product.image_url!}
+                                alt={product.title || 'Product'}
                                 fill
                                 className="object-cover"
                               />
@@ -249,12 +257,12 @@ export default function AdminProductsPage() {
 
                       <td className="py-3.5 px-4">
                         <span className="inline-flex px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold text-[10px]">
-                          {product.category}
+                          {product.category || 'Uncategorized'}
                         </span>
                       </td>
 
                       <td className="py-3.5 px-4 font-black text-slate-900">
-                        {formatCurrency(product.price)}
+                        {formatCurrency(product.price ?? 0)}
                       </td>
 
                       <td className="py-3.5 px-4">
@@ -276,7 +284,7 @@ export default function AdminProductsPage() {
                                 : 'bg-emerald-500'
                             }`}
                           />
-                          {isOutOfStock ? 'Out of Stock' : `${product.stock} in stock`}
+                          {isOutOfStock ? 'Out of Stock' : `${stockCount} in stock`}
                         </span>
                       </td>
 
@@ -329,7 +337,7 @@ export default function AdminProductsPage() {
                 <input
                   type="text"
                   required
-                  value={editingProduct.title}
+                  value={editingProduct.title || ''}
                   onChange={(e) =>
                     setEditingProduct({ ...editingProduct, title: e.target.value })
                   }
@@ -346,7 +354,7 @@ export default function AdminProductsPage() {
                     type="number"
                     required
                     min="0"
-                    value={editingProduct.price}
+                    value={editingProduct.price || 0}
                     onChange={(e) =>
                       setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) || 0 })
                     }
@@ -362,7 +370,7 @@ export default function AdminProductsPage() {
                     type="number"
                     required
                     min="0"
-                    value={editingProduct.stock}
+                    value={editingProduct.stock || 0}
                     onChange={(e) =>
                       setEditingProduct({ ...editingProduct, stock: parseInt(e.target.value, 10) || 0 })
                     }
@@ -379,7 +387,7 @@ export default function AdminProductsPage() {
                   <input
                     type="text"
                     required
-                    value={editingProduct.category}
+                    value={editingProduct.category || ''}
                     onChange={(e) =>
                       setEditingProduct({ ...editingProduct, category: e.target.value })
                     }
@@ -392,7 +400,7 @@ export default function AdminProductsPage() {
                     Image URL
                   </label>
                   <input
-                    type="url"
+                    type="text"
                     value={editingProduct.image_url || ''}
                     onChange={(e) =>
                       setEditingProduct({ ...editingProduct, image_url: e.target.value })
@@ -448,7 +456,7 @@ export default function AdminProductsPage() {
             <div>
               <h3 className="text-base font-extrabold text-slate-900">Delete Product?</h3>
               <p className="text-xs text-slate-500 mt-1">
-                Are you sure you want to delete <span className="font-bold text-slate-800">"{deletingProduct.title}"</span>? This action cannot be undone.
+                Are you sure you want to delete <span className="font-bold text-slate-800">&quot;{deletingProduct.title}&quot;</span>? This action cannot be undone.
               </p>
             </div>
 

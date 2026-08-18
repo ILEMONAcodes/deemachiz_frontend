@@ -65,16 +65,17 @@ export default function LoginPage() {
       // 4. Update local auth context session
       login(token, userData);
 
-      // 5. Determine user role and perform hard redirect
+      // 5. Determine user role and perform hard redirect correctly
       const userRole = String(userData?.role || '').toLowerCase().trim();
 
-      if (callbackUrl && callbackUrl.startsWith('/')) {
-        window.location.href = callbackUrl;
-      } else if (userRole === 'admin' || userRole === 'administrator') {
-        window.location.href = '/admin';
+      if (userRole === 'admin' || userRole === 'administrator') {
+        window.location.href = callbackUrl && callbackUrl.startsWith('/') ? callbackUrl : '/admin';
       } else {
-        // Fallback route for regular users
-        window.location.href = '/admin'; 
+        if (callbackUrl && callbackUrl.startsWith('/') && !callbackUrl.startsWith('/admin')) {
+          window.location.href = callbackUrl;
+        } else {
+          window.location.href = '/';
+        }
       }
     } catch (err: any) {
       console.error('Login error:', err);

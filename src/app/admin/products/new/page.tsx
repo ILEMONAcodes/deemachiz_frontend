@@ -40,19 +40,18 @@ export default function AddProductForm() {
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
       const token = localStorage.getItem('token') || localStorage.getItem('access_token');
       
+      // Cleaned payload matching your backend ProductCreate schema fields precisely
       const payload = {
-        title: formData.title,
-        name: formData.title, // Fallback key for FastAPI schema
+        name: formData.title,
         description: formData.description,
         price: parseFloat(formData.price),
-        stock: parseInt(formData.stock, 10),
-        quantity: parseInt(formData.stock, 10), // Fallback key for FastAPI schema
+        stock_quantity: parseInt(formData.stock, 10),
         category: formData.category,
         image_url: imageUrl,
-        image: imageUrl, // Fallback key for FastAPI schema
       };
 
-      const res = await fetch(`${baseUrl}/products`, {
+      // Added trailing slash to /products/ to avoid any redirect stripping headers/body
+      const res = await fetch(`${baseUrl}/products/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -66,7 +65,7 @@ export default function AddProductForm() {
         throw new Error(errorData?.detail || 'Failed to create product');
       }
 
-      router.push('/products');
+      router.push('/admin/products');
       router.refresh();
     } catch (err: any) {
       console.error('Error creating product:', err);
