@@ -1,6 +1,10 @@
 {
-  "/admin/products/new/page": "app/admin/products/new/page.js",
+  "/admin/products/page": "app/admin/products/page.js",
+  "/(shop)/checkout/page": "app/(shop)/checkout/page.js",
+  "/(shop)/products/page": "app/(shop)/products/page.js",
+  "/(shop)/page": "app/(shop)/page.js",
+  "/admin/orders/page": "app/admin/orders/page.js",
   "/admin/page": "app/admin/page.js",
-  "/(auth)/login/page": "app/(auth)/login/page.js",
-  "/admin/products/page": "app/admin/products/page.js"
+  "/(shop)/orders/page": "app/(shop)/orders/page.js",
+  "/(auth)/login/page": "app/(auth)/login/page.js"
 }
